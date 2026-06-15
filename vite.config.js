@@ -10,5 +10,6 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',        // renderer/editor/storage tests touch the DOM
+    setupFiles: ['./src/test-setup.js'],  // patches globalThis.localStorage on Node v25+
   },
 })
