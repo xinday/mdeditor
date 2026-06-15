@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Tauri (Rust) build output
+src-tauri/target/
+
+# Logs & misc
+*.log
+.DS_Store
+.vite/
