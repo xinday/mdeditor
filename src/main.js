@@ -37,10 +37,10 @@ async function update(text) {
 }
 
 const editor = createEditor(editorEl, {
-  onChange: (text) => { update(text) },
+  onChange: (text) => { update(text).catch(console.error) },
 })
 
 // Restore the saved draft, or show the default doc on first run.
 const initial = loadDraft() || DEFAULT_DOC
 editor.setValue(initial)
-update(initial)
+update(initial).catch(console.error)
