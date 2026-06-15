@@ -15,7 +15,8 @@ A KISS markdown editor with live split-pane preview — runs as a web app (Vite)
 - `npm test` — unit tests (Vitest)
 
 ## Build
-- `npm run build` — static web build to `dist/`
+- `npm run build` — static web build to `dist/` (serve over HTTP, e.g. `npm run preview`)
+- `npm run build:single` — one self-contained `dist-single/index.html` (all JS/CSS inlined; opens offline by double-click)
 - `npm run tauri:build` — desktop installers
 
 ## Requirements
