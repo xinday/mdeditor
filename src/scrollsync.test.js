@@ -1,7 +1,10 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { syncScroll } from './scrollsync.js'
 
-afterEach(() => { document.body.innerHTML = '' })
+afterEach(() => {
+  document.body.innerHTML = ''
+  vi.unstubAllGlobals()
+})
 
 function fakeEl(scrollHeight, clientHeight) {
   const el = document.createElement('div')
@@ -32,15 +35,30 @@ describe('syncScroll', () => {
     expect(a.scrollTop).toBe(75) // 0.25 * 300
   })
 
-  it('ignores the echo scroll so the panes do not fight (re-entrancy guard)', () => {
-    const a = fakeEl(200, 100)
-    const b = fakeEl(400, 100)
+  it('suppresses the echo while locked, then resumes after the frame', () => {
+    const frames = []
+    vi.stubGlobal('requestAnimationFrame', (cb) => { frames.push(cb); return frames.length })
+
+    const a = fakeEl(200, 100) // scrollable range 100
+    const b = fakeEl(400, 100) // scrollable range 300
     syncScroll(a, b)
+
     a.scrollTop = 50
-    a.dispatchEvent(new Event('scroll')) // locks "a", sets b
-    const aBefore = a.scrollTop
-    b.dispatchEvent(new Event('scroll')) // echo: must be ignored while locked
-    expect(a.scrollTop).toBe(aBefore)
+    a.dispatchEvent(new Event('scroll')) // locks "a", sets b to 150
+    expect(b.scrollTop).toBe(150)
+
+    // While "a" holds the lock, a real move of b must NOT echo back to a.
+    b.scrollTop = 300                    // b jumps to the bottom
+    b.dispatchEvent(new Event('scroll'))
+    expect(a.scrollTop).toBe(50)         // guard active: a unchanged (would be 100 without the guard)
+
+    // Release the lock by running the rAF callback captured from a's handler.
+    frames.forEach((cb) => cb())
+
+    // Now b can drive a again.
+    b.scrollTop = 300
+    b.dispatchEvent(new Event('scroll'))
+    expect(a.scrollTop).toBe(100)        // release works: ratio 1.0 * range 100
   })
 
   it('treats a non-scrollable source as position 0', () => {
