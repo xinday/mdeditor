@@ -21,16 +21,17 @@ export async function openFile() {
     const content = await readTextFile(path)
     return { path, content }
   }
-  // Web fallback: <input type=file>
+  // Web fallback: <input type=file>. The 'cancel' event settles the Promise
+  // when the user dismisses the picker (otherwise 'change' never fires).
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.md,.markdown,text/markdown'
     input.onchange = async () => {
       const file = input.files?.[0]
-      if (!file) return resolve(null)
-      resolve({ path: file.name, content: await file.text() })
+      resolve(file ? { path: file.name, content: await file.text() } : null)
     }
+    input.addEventListener('cancel', () => resolve(null))
     input.click()
   })
 }

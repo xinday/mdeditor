@@ -11,6 +11,10 @@ describe('isTauri', () => {
     window.__TAURI_INTERNALS__ = {}
     expect(isTauri()).toBe(true)
   })
+  it('is true when legacy __TAURI__ is present', () => {
+    window.__TAURI__ = {}
+    expect(isTauri()).toBe(true)
+  })
 })
 
 describe('basename', () => {
