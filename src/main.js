@@ -4,6 +4,7 @@ import { renderMermaid } from './mermaid.js'
 import { createEditor } from './editor.js'
 import { loadDraft, saveDraft } from './storage.js'
 import { openFile, saveFile, saveFileAs, basename } from './files.js'
+import { syncScroll } from './scrollsync.js'
 
 const DEFAULT_DOC = `# 歡迎使用 mdeditor
 
@@ -31,6 +32,8 @@ graph TD;
 const editorEl = document.querySelector('#editor')
 const previewEl = document.querySelector('#preview')
 const statusEl = document.querySelector('#status')
+
+syncScroll(editorEl, previewEl)
 
 let currentPath = null
 let dirty = false
