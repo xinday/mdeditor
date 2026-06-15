@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createEditor } from './editor.js'
 
 beforeEach(() => vi.useFakeTimers())
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  vi.useRealTimers()
+  document.body.innerHTML = '' // remove appended textareas + their listeners
+})
 
 function makeTextarea() {
   const ta = document.createElement('textarea')
