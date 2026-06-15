@@ -10,7 +10,7 @@ function highlight(str, lang) {
   if (lang && hljs.getLanguage(lang)) {
     try {
       const inner = hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
-      return `<pre><code class="hljs language-${lang}">${inner}</code></pre>`
+      return `<pre><code class="hljs language-${md.utils.escapeHtml(lang)}">${inner}</code></pre>`
     } catch (_) { /* fall through */ }
   }
   return `<pre><code class="hljs">${md.utils.escapeHtml(str)}</code></pre>`

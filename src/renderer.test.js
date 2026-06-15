@@ -37,6 +37,13 @@ describe('render', () => {
     expect(out).not.toContain('hljs')
   })
 
+  it('escapes code in unknown-language fences (no raw HTML)', () => {
+    const out = render('```unknownlang\n<b>raw</b>\n```')
+    expect(out).toContain('hljs')
+    expect(out).not.toContain('<b>raw</b>')
+    expect(out).toContain('&lt;b&gt;')
+  })
+
   it('escapes raw HTML in source (html:false)', () => {
     const out = render('<script>alert(1)</script>')
     expect(out).toContain('&lt;script&gt;')
