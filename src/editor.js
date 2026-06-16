@@ -17,7 +17,7 @@ const theme = EditorView.theme({
 // public API (getValue / setValue / debounced onChange) and adds 0-based
 // source-line geometry (topLine / scrollToLine) plus the scroll element, so
 // scrollsync can stay editor-agnostic.
-export function createEditor(container, { onChange, delay = 150 } = {}) {
+export function createEditor(container, { onChange = () => {}, delay = 150 } = {}) {
   let timer = null
   let programmatic = false // suppress onChange for setValue-driven edits
 
@@ -40,6 +40,8 @@ export function createEditor(container, { onChange, delay = 150 } = {}) {
 
   // The 0-based source line (with intra-line fraction) at the top edge.
   function topLine() {
+    // topHeight may be negative at the very top (padding above line 0);
+    // lineBlockAtHeight clamps below-zero heights to the first block.
     const topHeight = view.scrollDOM.scrollTop - view.documentPadding.top
     const block = view.lineBlockAtHeight(topHeight)
     const line0 = view.state.doc.lineAt(block.from).number - 1
