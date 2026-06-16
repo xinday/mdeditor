@@ -37,12 +37,27 @@ const defaultFence =
 
 md.renderer.rules.fence = function (tokens, idx, options, env, self) {
   const token = tokens[idx]
+  const attr = token.map ? ` data-source-line="${token.map[0]}"` : ''
   const lang = (token.info ? token.info.trim() : '').split(/\s+/g)[0]
   if (lang === 'mermaid') {
-    return `<pre class="mermaid">${md.utils.escapeHtml(token.content)}</pre>\n`
+    return `<pre class="mermaid"${attr}>${md.utils.escapeHtml(token.content)}</pre>\n`
   }
-  return defaultFence(tokens, idx, options, env, self)
+  // The custom highlight() builds a full <pre><code> and bypasses attr
+  // injection, so stamp the line onto the opening <pre> ourselves.
+  const html = defaultFence(tokens, idx, options, env, self)
+  return attr ? html.replace('<pre', `<pre${attr}`) : html
 }
+
+// Stamp every top-level block (heading, paragraph, list, blockquote, table,
+// hr, code) with its 0-based source line. Preview scroll sync interpolates
+// between these anchors; only opening/self-contained tokens are tagged.
+md.core.ruler.push('source_line', (state) => {
+  for (const token of state.tokens) {
+    if (token.level === 0 && token.map && token.nesting !== -1) {
+      token.attrSet('data-source-line', String(token.map[0]))
+    }
+  }
+})
 
 export function render(markdown) {
   return md.render(markdown)

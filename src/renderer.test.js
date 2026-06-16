@@ -3,12 +3,12 @@ import { render } from './renderer.js'
 
 describe('render', () => {
   it('renders a heading', () => {
-    expect(render('# Hello')).toContain('<h1>Hello</h1>')
+    expect(render('# Hello')).toContain('>Hello</h1>')
   })
 
   it('renders a GFM table', () => {
     const md = '| a | b |\n| - | - |\n| 1 | 2 |'
-    expect(render(md)).toContain('<table>')
+    expect(render(md)).toContain('<table')
   })
 
   it('renders strikethrough', () => {
@@ -32,7 +32,7 @@ describe('render', () => {
 
   it('turns a mermaid fence into <pre class="mermaid"> (not hljs)', () => {
     const out = render('```mermaid\ngraph TD;A-->B;\n```')
-    expect(out).toContain('<pre class="mermaid">')
+    expect(out).toContain('<pre class="mermaid"')
     expect(out).toContain('graph TD')
     expect(out).not.toContain('hljs')
   })
@@ -48,5 +48,21 @@ describe('render', () => {
     const out = render('<script>alert(1)</script>')
     expect(out).toContain('&lt;script&gt;')
     expect(out).not.toContain('<script>')
+  })
+
+  it('stamps top-level blocks with 0-based data-source-line', () => {
+    const out = render('# A\n\npara\n')
+    expect(out).toContain('<h1 data-source-line="0"')
+    expect(out).toMatch(/<p data-source-line="2"/) // line 0 heading, line 1 blank, line 2 paragraph
+  })
+
+  it('stamps fenced code blocks with data-source-line on the <pre>', () => {
+    const out = render('text\n\n```js\nconst x = 1;\n```\n')
+    expect(out).toMatch(/<pre data-source-line="2"><code/) // fence opens at line index 2
+  })
+
+  it('stamps mermaid blocks with data-source-line', () => {
+    const out = render('```mermaid\ngraph TD;A-->B;\n```')
+    expect(out).toContain('<pre class="mermaid" data-source-line="0"')
   })
 })
