@@ -8,11 +8,14 @@ export function syncScroll(editor, preview) {
   let locked = null
 
   // Live snapshot of preview anchors as {line, top}, sorted by line. Re-read on
-  // every scroll so it stays correct across re-renders.
+  // every scroll so it stays correct across re-renders. Assumes offsetTop
+  // increases monotonically with source line (standard for block-level markdown
+  // output); non-monotonic layouts degrade to approximate positioning.
   function anchors() {
     const list = []
     for (const el of preview.querySelectorAll('[data-source-line]')) {
-      const line = Number(el.getAttribute('data-source-line'))
+      const raw = el.getAttribute('data-source-line')
+      const line = raw !== null && raw !== '' ? Number(raw) : NaN
       if (Number.isFinite(line)) list.push({ line, top: el.offsetTop })
     }
     return list.sort((a, b) => a.line - b.line)
@@ -61,5 +64,6 @@ export function syncScroll(editor, preview) {
   preview.addEventListener('scroll', guard('preview', previewToEditor))
 
   // Re-align the preview to the editor (e.g. after the preview re-renders).
-  return { resync: editorToPreview }
+  // Guarded so the resulting preview scroll does not echo back into the editor.
+  return { resync: guard('editor', editorToPreview) }
 }

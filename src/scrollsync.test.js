@@ -57,6 +57,20 @@ describe('syncScroll', () => {
     expect(preview.scrollTop).toBe(400)
   })
 
+  it('editor scroll interpolates within the second anchor span', () => {
+    const { editor, preview } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(15) // halfway between line 10 (top 100) and line 20 (top 400)
+    editor.scrollEl.dispatchEvent(new Event('scroll'))
+    expect(preview.scrollTop).toBe(250)
+  })
+
+  it('clamps to the first anchor when the top line is before it', () => {
+    const { editor, preview } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(-2) // before the first anchor (line 0)
+    editor.scrollEl.dispatchEvent(new Event('scroll'))
+    expect(preview.scrollTop).toBe(0)
+  })
+
   it('suppresses the echo while locked, then resumes after the frame', () => {
     const frames = []
     vi.stubGlobal('requestAnimationFrame', (cb) => { frames.push(cb); return frames.length })
