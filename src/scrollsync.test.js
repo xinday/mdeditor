@@ -6,67 +6,90 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function fakeEl(scrollHeight, clientHeight) {
-  const el = document.createElement('div')
+// Build a fake preview (with stubbed scrollTop) holding anchor elements whose
+// data-source-line + offsetTop we control, plus a fake editor exposing the
+// scrollsync contract (scrollEl + topLine/scrollToLine spies).
+function setup(anchors) {
+  const preview = document.createElement('div')
   let top = 0
-  Object.defineProperty(el, 'scrollTop', { get: () => top, set: (v) => { top = v }, configurable: true })
-  Object.defineProperty(el, 'scrollHeight', { get: () => scrollHeight, configurable: true })
-  Object.defineProperty(el, 'clientHeight', { get: () => clientHeight, configurable: true })
-  document.body.appendChild(el)
-  return el
+  Object.defineProperty(preview, 'scrollTop', { get: () => top, set: (v) => { top = v }, configurable: true })
+  for (const a of anchors) {
+    const el = document.createElement('div')
+    el.setAttribute('data-source-line', String(a.line))
+    Object.defineProperty(el, 'offsetTop', { get: () => a.top, configurable: true })
+    preview.appendChild(el)
+  }
+  document.body.appendChild(preview)
+
+  const scrollEl = document.createElement('div')
+  document.body.appendChild(scrollEl)
+  const editor = { scrollEl, topLine: vi.fn(), scrollToLine: vi.fn() }
+
+  const sync = syncScroll(editor, preview)
+  return { editor, preview, sync }
 }
 
+const ANCHORS = [
+  { line: 0, top: 0 },
+  { line: 10, top: 100 },
+  { line: 20, top: 400 },
+]
+
 describe('syncScroll', () => {
-  it('scrolls the other element to the same fractional position', () => {
-    const a = fakeEl(200, 100) // scrollable range 100
-    const b = fakeEl(400, 100) // scrollable range 300
-    syncScroll(a, b)
-    a.scrollTop = 50           // 50% of a's range
-    a.dispatchEvent(new Event('scroll'))
-    expect(b.scrollTop).toBe(150) // 50% of b's range (0.5 * 300)
+  it('editor scroll sets preview to the interpolated pixel for the top line', () => {
+    const { editor, preview } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(5) // halfway between line 0 (top 0) and line 10 (top 100)
+    editor.scrollEl.dispatchEvent(new Event('scroll'))
+    expect(preview.scrollTop).toBe(50)
   })
 
-  it('is bidirectional', () => {
-    const a = fakeEl(400, 100) // range 300
-    const b = fakeEl(200, 100) // range 100
-    syncScroll(a, b)
-    b.scrollTop = 25           // 25% of b's range
-    b.dispatchEvent(new Event('scroll'))
-    expect(a.scrollTop).toBe(75) // 0.25 * 300
+  it('preview scroll calls editor.scrollToLine with the interpolated line', () => {
+    const { editor, preview } = setup(ANCHORS)
+    preview.scrollTop = 250 // halfway between top 100 (line 10) and top 400 (line 20)
+    preview.dispatchEvent(new Event('scroll'))
+    expect(editor.scrollToLine).toHaveBeenCalledWith(15)
+  })
+
+  it('clamps to the last anchor when the top line is past the end', () => {
+    const { editor, preview } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(99)
+    editor.scrollEl.dispatchEvent(new Event('scroll'))
+    expect(preview.scrollTop).toBe(400)
   })
 
   it('suppresses the echo while locked, then resumes after the frame', () => {
     const frames = []
     vi.stubGlobal('requestAnimationFrame', (cb) => { frames.push(cb); return frames.length })
 
-    const a = fakeEl(200, 100) // scrollable range 100
-    const b = fakeEl(400, 100) // scrollable range 300
-    syncScroll(a, b)
+    const { editor, preview } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(5)
+    editor.scrollEl.dispatchEvent(new Event('scroll')) // locks "editor", sets preview to 50
+    expect(preview.scrollTop).toBe(50)
 
-    a.scrollTop = 50
-    a.dispatchEvent(new Event('scroll')) // locks "a", sets b to 150
-    expect(b.scrollTop).toBe(150)
+    // While "editor" holds the lock, a preview scroll must NOT drive the editor.
+    preview.scrollTop = 80
+    preview.dispatchEvent(new Event('scroll'))
+    expect(editor.scrollToLine).not.toHaveBeenCalled()
 
-    // While "a" holds the lock, a real move of b must NOT echo back to a.
-    b.scrollTop = 300                    // b jumps to the bottom
-    b.dispatchEvent(new Event('scroll'))
-    expect(a.scrollTop).toBe(50)         // guard active: a unchanged (would be 100 without the guard)
+    frames.forEach((cb) => cb()) // release the lock
 
-    // Release the lock by running the rAF callback captured from a's handler.
-    frames.forEach((cb) => cb())
-
-    // Now b can drive a again.
-    b.scrollTop = 300
-    b.dispatchEvent(new Event('scroll'))
-    expect(a.scrollTop).toBe(100)        // release works: ratio 1.0 * range 100
+    preview.scrollTop = 80
+    preview.dispatchEvent(new Event('scroll'))
+    expect(editor.scrollToLine).toHaveBeenCalledTimes(1) // release works
   })
 
-  it('treats a non-scrollable source as position 0', () => {
-    const a = fakeEl(100, 100) // range 0
-    const b = fakeEl(400, 100)
-    syncScroll(a, b)
-    a.scrollTop = 0
-    a.dispatchEvent(new Event('scroll'))
-    expect(b.scrollTop).toBe(0)
+  it('does nothing when there are no anchors', () => {
+    const { editor, preview } = setup([])
+    editor.topLine.mockReturnValue(5)
+    expect(() => editor.scrollEl.dispatchEvent(new Event('scroll'))).not.toThrow()
+    preview.dispatchEvent(new Event('scroll'))
+    expect(editor.scrollToLine).not.toHaveBeenCalled()
+  })
+
+  it('resync() re-aligns the preview to the editor on demand', () => {
+    const { editor, preview, sync } = setup(ANCHORS)
+    editor.topLine.mockReturnValue(10)
+    sync.resync()
+    expect(preview.scrollTop).toBe(100)
   })
 })
