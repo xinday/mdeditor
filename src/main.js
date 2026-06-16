@@ -33,8 +33,6 @@ const editorEl = document.querySelector('#editor')
 const previewEl = document.querySelector('#preview')
 const statusEl = document.querySelector('#status')
 
-syncScroll(editorEl, previewEl)
-
 let currentPath = null
 let dirty = false
 
@@ -46,6 +44,7 @@ function setStatus() {
 async function renderPreview(text) {
   previewEl.innerHTML = render(text)
   await renderMermaid(previewEl)
+  sync.resync()
 }
 
 const editor = createEditor(editorEl, {
@@ -56,6 +55,8 @@ const editor = createEditor(editorEl, {
     renderPreview(text).catch(console.error)
   },
 })
+
+const sync = syncScroll(editor, previewEl)
 
 function loadContent(text, path) {
   editor.setValue(text)
