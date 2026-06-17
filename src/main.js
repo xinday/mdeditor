@@ -4,7 +4,9 @@ import { render } from './renderer.js'
 import { renderMermaid } from './mermaid.js'
 import { createEditor } from './editor.js'
 import { loadDraft, saveDraft } from './storage.js'
-import { openFile, saveFile, saveFileAs, basename } from './files.js'
+import { openFile, saveFile, saveFileAs, basename, exportTextFile } from './files.js'
+import { buildStandaloneHtml, printHtml } from './exporter.js'
+import { EXPORT_STYLES } from './export-styles.js'
 import { syncScroll } from './scrollsync.js'
 
 const DEFAULT_DOC = `# 歡迎使用 mdeditor
@@ -85,6 +87,49 @@ async function doSaveAs() {
   const saved = await saveFileAs(editor.getValue(), suggested)
   if (saved) { currentPath = saved; dirty = false; setStatus() }
 }
+
+// --- Export actions ---
+function exportBaseName() {
+  const base = currentPath ? basename(currentPath) : 'untitled'
+  return base.replace(/\.[^.]+$/, '') || 'untitled'
+}
+function buildExportHtml() {
+  return buildStandaloneHtml({
+    title: exportBaseName(),
+    bodyHtml: previewEl.innerHTML,
+    styles: EXPORT_STYLES,
+  })
+}
+async function doExportHtml() {
+  await exportTextFile(buildExportHtml(), `${exportBaseName()}.html`, {
+    name: 'HTML', extensions: ['html'], mime: 'text/html',
+  })
+}
+function doPrint() {
+  printHtml(buildExportHtml())
+}
+
+const exportBtn = document.querySelector('#btn-export')
+const exportList = document.querySelector('#export-list')
+function closeExportMenu() {
+  exportList.hidden = true
+  exportBtn.setAttribute('aria-expanded', 'false')
+}
+exportBtn.addEventListener('click', (e) => {
+  e.stopPropagation()
+  const willOpen = exportList.hidden
+  exportList.hidden = !willOpen
+  exportBtn.setAttribute('aria-expanded', String(willOpen))
+})
+exportList.addEventListener('click', (e) => {
+  const action = e.target.closest('[data-export]')?.dataset.export
+  if (!action) return
+  closeExportMenu()
+  if (action === 'html') doExportHtml().catch(console.error)
+  else if (action === 'print') doPrint()
+})
+document.addEventListener('click', closeExportMenu)
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeExportMenu() })
 
 document.querySelector('#btn-new').addEventListener('click', doNew)
 document.querySelector('#btn-open').addEventListener('click', doOpen)

@@ -12,6 +12,13 @@
         <button id="btn-open" type="button">開啟</button>
         <button id="btn-save" type="button">存檔</button>
         <button id="btn-saveas" type="button">另存為</button>
+        <div id="export-menu">
+          <button id="btn-export" type="button" aria-haspopup="true" aria-expanded="false">匯出 ▾</button>
+          <ul id="export-list" hidden>
+            <li><button type="button" data-export="html">HTML</button></li>
+            <li><button type="button" data-export="print">列印 / PDF</button></li>
+          </ul>
+        </div>
         <span id="status"></span>
       </header>
       <main id="panes">
