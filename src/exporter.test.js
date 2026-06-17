@@ -47,16 +47,20 @@ describe('printHtml', () => {
     const print = vi.fn()
     const focus = vi.fn()
     let afterprintCb = null
+    let afterprintOpts = null
     const fakeWin = {
       focus,
       print,
-      addEventListener: (type, cb) => { if (type === 'afterprint') afterprintCb = cb },
+      addEventListener: (type, cb, opts) => {
+        if (type === 'afterprint') { afterprintCb = cb; afterprintOpts = opts }
+      },
     }
     Object.defineProperty(iframe, 'contentWindow', { value: fakeWin, configurable: true })
     iframe.dispatchEvent(new Event('load'))
     expect(focus).toHaveBeenCalled()
     expect(print).toHaveBeenCalledTimes(1)
     expect(document.body.contains(iframe)).toBe(true)
+    expect(afterprintOpts).toEqual({ once: true })
     afterprintCb()
     expect(document.body.contains(iframe)).toBe(false)
   })
