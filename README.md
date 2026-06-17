@@ -1,24 +1,24 @@
 # mdeditor
 
-A KISS markdown editor with live split-pane preview — runs as a web app (Vite) and a desktop app (Tauri v2).
+一個遵循 KISS 原則的 Markdown 編輯器，具備即時分割視窗預覽 —— 可作為網頁版 app（Vite）與桌面版 app（Tauri v2）執行。
 
-## Features
-- Live split-pane editing with GitHub Flavored Markdown (tables, strikethrough, task lists, autolinks)
-- Syntax highlighting (highlight.js)
-- Mermaid diagrams with per-diagram error isolation
-- File new/open/save/save-as (`Ctrl+N` / `Ctrl+O` / `Ctrl+S` / `Ctrl+Shift+S`)
-- Autosave of the current draft to localStorage (restored on next launch)
+## 功能
+- 即時分割視窗編輯，支援 GitHub Flavored Markdown（表格、刪除線、任務清單、自動連結）
+- 語法高亮（highlight.js）
+- Mermaid 圖表，並對每張圖表做錯誤隔離
+- 檔案新建/開啟/儲存/另存（`Ctrl+N` / `Ctrl+O` / `Ctrl+S` / `Ctrl+Shift+S`）
+- 自動將目前草稿儲存至 localStorage（下次啟動時還原）
 
-## Develop
-- `npm run dev` — web app at http://localhost:1420
-- `npm run tauri:dev` — desktop window (requires Rust toolchain)
-- `npm test` — unit tests (Vitest)
+## 開發
+- `npm run dev` —— 網頁版 app，位於 http://localhost:1420
+- `npm run tauri:dev` —— 桌面視窗（需要 Rust 工具鏈）
+- `npm test` —— 單元測試（Vitest）
 
-## Build
-- `npm run build` — static web build to `dist/` (serve over HTTP, e.g. `npm run preview`)
-- `npm run build:single` — one self-contained `dist-single/index.html` (all JS/CSS inlined; opens offline by double-click)
-- `npm run tauri:build` — desktop installers
+## 建置
+- `npm run build` —— 靜態網頁建置至 `dist/`（透過 HTTP 提供，例如 `npm run preview`）
+- `npm run build:single` —— 單一自包含的 `dist-single/index.html`（所有 JS/CSS 內嵌；雙擊即可離線開啟）
+- `npm run tauri:build` —— 桌面版安裝程式
 
-## Requirements
+## 需求
 - Node.js + npm
-- For the desktop app: Rust toolchain and (Windows) WebView2.
+- 桌面版 app 另需：Rust 工具鏈與（Windows）WebView2。
