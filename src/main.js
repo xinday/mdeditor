@@ -1,4 +1,5 @@
 import './style.css'
+import './export.css'
 import { render } from './renderer.js'
 import { renderMermaid } from './mermaid.js'
 import { createEditor } from './editor.js'
