@@ -29,7 +29,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      # npm install（非 npm ci）：lockfile 由本機 npm 11 產生，部分跨平台/wasm
+      # 的 optional 相依（@napi-rs/wasm-runtime → @emnapi/*）未完整寫入，會讓
+      # Linux runner 上嚴格的 `npm ci` 失敗；npm install 會自行調和，較穩健。
+      - run: npm install --no-audit --no-fund
 
       - run: npm run build   # 產出靜態 dist/（base 為相對路徑，子路徑可用）
 
