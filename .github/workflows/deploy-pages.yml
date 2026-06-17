@@ -5,7 +5,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master]
-  workflow_dispatch:
+    # 只在「會影響 web 建置產物」的檔案變動時部署。純文件、桌面殼層、雜項
+    # 設定的提交會跳過（整個 push 只動到這些路徑時才跳過；混合提交仍會部署）。
+    paths-ignore:
+      - '**/*.md'        # README、CLAUDE.md、docs 內所有 markdown
+      - 'docs/**'
+      - 'src-tauri/**'   # Tauri 桌面殼層，不在 web build 內
+      - 'scripts/**'     # make-icon.cjs 等，與 web 無關
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.gitattributes'
+  workflow_dispatch:     # 仍可在 Actions 分頁手動觸發部署
 
 # Pages 部署所需權限
 permissions:
