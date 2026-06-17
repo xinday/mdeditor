@@ -62,8 +62,22 @@ export async function saveFileAs(content, suggestedName = 'untitled.md') {
   return webDownload(content, suggestedName)
 }
 
-function webDownload(content, name) {
-  const blob = new Blob([content], { type: 'text/markdown' })
+// 以自訂副檔名/MIME 儲存任意文字內容。Tauri 顯示存檔對話框並寫檔；
+// web 下載對應 MIME 的 Blob。回傳路徑/檔名，取消回傳 null。
+export async function exportTextFile(content, suggestedName, { name, extensions, mime }) {
+  if (isTauri()) {
+    const { save } = await import('@tauri-apps/plugin-dialog')
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs')
+    const path = await save({ defaultPath: suggestedName, filters: [{ name, extensions }] })
+    if (path === null) return null
+    await writeTextFile(path, content)
+    return path
+  }
+  return webDownload(content, suggestedName, mime)
+}
+
+function webDownload(content, name, mime = 'text/markdown') {
+  const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
