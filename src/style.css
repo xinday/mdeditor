@@ -1,6 +1,6 @@
 :root { --border: #e2e8f0; --bg: #ffffff; --fg: #1e293b; --muted: #64748b; }
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
 body { font-family: system-ui, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
 
 #app { display: flex; flex-direction: column; height: 100vh; }
@@ -22,7 +22,11 @@ body { font-family: system-ui, "Segoe UI", sans-serif; color: var(--fg); backgro
 }
 #editor .cm-editor { height: 100%; }
 #editor .cm-editor.cm-focused { outline: none; }
-#preview { padding: 16px 24px; overflow: auto; }
+/* In-app preview fills its pane. export.css centres .markdown-body in an 860px
+   column (good for the standalone export doc), but here #preview is a grid item:
+   its `margin:0 auto` would cancel grid stretch and shrink it to content width,
+   leaving blank space on wide windows. Override to stretch and fill the track. */
+#preview { padding: 16px 24px; overflow: auto; max-width: none; margin: 0; }
 
 #export-menu { position: relative; display: inline-flex; }
 #export-list {
