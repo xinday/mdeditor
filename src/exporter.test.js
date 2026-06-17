@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { buildStandaloneHtml, printHtml } from './exporter.js'
 
 describe('buildStandaloneHtml', () => {
@@ -29,7 +29,9 @@ describe('buildStandaloneHtml', () => {
 })
 
 describe('printHtml', () => {
+  beforeEach(() => { vi.useFakeTimers() })
   afterEach(() => {
+    vi.useRealTimers()
     document.querySelectorAll('iframe.export-print-frame').forEach((f) => f.remove())
   })
 
@@ -59,9 +61,19 @@ describe('printHtml', () => {
     iframe.dispatchEvent(new Event('load'))
     expect(focus).toHaveBeenCalled()
     expect(print).toHaveBeenCalledTimes(1)
-    expect(document.body.contains(iframe)).toBe(true)
     expect(afterprintOpts).toEqual({ once: true })
+    expect(document.body.contains(iframe)).toBe(true)
     afterprintCb()
+    expect(document.body.contains(iframe)).toBe(false)
+  })
+
+  it('removes the iframe via the timeout fallback when afterprint never fires', () => {
+    const iframe = printHtml('<!doctype html>')
+    const fakeWin = { focus: vi.fn(), print: vi.fn(), addEventListener: vi.fn() }
+    Object.defineProperty(iframe, 'contentWindow', { value: fakeWin, configurable: true })
+    iframe.dispatchEvent(new Event('load'))
+    expect(document.body.contains(iframe)).toBe(true)
+    vi.advanceTimersByTime(60000)
     expect(document.body.contains(iframe)).toBe(false)
   })
 })

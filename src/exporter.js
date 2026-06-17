@@ -39,9 +39,20 @@ export function printHtml(html) {
   iframe.addEventListener('load', () => {
     const win = iframe.contentWindow
     if (!win) return
-    win.addEventListener('afterprint', () => iframe.remove(), { once: true })
+    let cleaned = false
+    let fallback
+    const cleanup = () => {
+      if (cleaned) return
+      cleaned = true
+      clearTimeout(fallback)
+      iframe.remove()
+    }
+    win.addEventListener('afterprint', cleanup, { once: true })
     win.focus()
     win.print()
+    // afterprint 為主；部分瀏覽器/平台不保證觸發 afterprint，故以逾時為備援，
+    // 確保隱藏 iframe 不會殘留。cleanup 以 cleaned 旗標保證冪等。
+    fallback = setTimeout(cleanup, 60000)
   })
   document.body.appendChild(iframe)
   return iframe
