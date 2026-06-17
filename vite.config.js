@@ -5,9 +5,13 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 // `--mode singlefile` produces one self-contained dist-single/index.html
 // (all JS/CSS inlined) that runs by double-click via file://. The normal
 // build stays multi-file in dist/ (what Tauri bundles and what web hosts serve).
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const singlefile = mode === 'singlefile'
   return {
+    // Relative base on BUILD so one dist/ works both at a URL subpath (GitHub
+    // Pages project site: https://<user>.github.io/<repo>/) and at root (Tauri's
+    // custom-protocol root). Dev stays '/' so Tauri's devUrl :1420 is unaffected.
+    base: command === 'build' ? './' : '/',
     clearScreen: false,            // keep cargo/Rust output visible (TOP-LEVEL, not under server)
     plugins: singlefile ? [viteSingleFile()] : [],
     server: {
