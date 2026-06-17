@@ -33,7 +33,9 @@ describe('basename', () => {
 })
 
 describe('exportTextFile (web)', () => {
-  let origCreate, origRevoke, clickSpy
+  const origCreate = URL.createObjectURL
+  const origRevoke = URL.revokeObjectURL
+  let clickSpy
   afterEach(() => {
     URL.createObjectURL = origCreate
     URL.revokeObjectURL = origRevoke
@@ -41,8 +43,6 @@ describe('exportTextFile (web)', () => {
   })
 
   it('downloads a blob with the given mime and name, and returns the name', async () => {
-    origCreate = URL.createObjectURL
-    origRevoke = URL.revokeObjectURL
     let captured = null
     URL.createObjectURL = vi.fn((blob) => { captured = blob; return 'blob:fake' })
     URL.revokeObjectURL = vi.fn()
